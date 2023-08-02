@@ -66,34 +66,71 @@ module.exports = (cache) => {
     })
 
     router.get('/', async (req, res) => {
-        const page = parseInt(req.query.page) || 1 //Get the requested page from the query params
-        const limit = 5
-        const offset = (page - 1) * limit // No. of records to skip
-
+        const page = parseInt(req.query.page) || 1; // Get the requested page from the query params
+        const limit = 5;
+        const offset = (page - 1) * limit; // No. of records to skip
+        const { sort } = req.query;
+      
         try {
-            // Check if cached data is available for the requested page
-            const cachedData = cache.get(`/api/products?page=${page}`)
+          // Check if cached data is available for the requested page
+          const cachedData = cache.get(
+            sort ? `/api/products?page=${page}&sort=${sort}` : `/api/products?page=${page}`
+          );
+          if (cachedData) {
+            return res.status(200).json(cachedData);
+          }
+      
+          // Fetch the total count of products from the database
+          const totalProducts = await Product.count();
+      
+          // Prepare the options object for Sequelize query
+          const options = {
+            limit,
+            offset,
+          };
+      
+          // Check if sort query parameter is provided
+          if (sort) {
+            const order = sort === 'desc' ? 'DESC' : 'ASC';
+            options.order = [['id', order]];
+          }
+      
+          // Fetch products from the database with the options
+          const products = await Product.findAll(options);
+      
+          const data = {
+            products,
+            total: totalProducts,
+          };
+      
+          cache.put(
+            sort ? `/api/products?page=${page}&sort=${sort}` : `/api/products?page=${page}`,
+            data,
+            60000 // Cache for 1 minute (60000 ms)
+          );
+      
+          res.status(200).json(data);
+        } catch (error) {
+          console.error(error);
+          res.status(500).send(error);
+        }
+      });
+
+    router.get('/category/:categoryId', async (req, res) => {
+        const categoryId = req.params.categoryId
+        try {
+            // Check if cached data is available for the requested categories of products
+            const cachedData = cache.get(`/api/products/category/${categoryId}`)
             if (cachedData) {
                 return res.status(200).json(cachedData)
             }
-            // Fetch the total count of products from the database
-            const totalProducts = await Product.count()
-            // Fetch products from the database with limit and offset
-            const products = await Product.findAll({
-                limit,
-                offset
-            })
-            const data = {
-                products,
-                total: totalProducts
-            }
-            cache.put(`/api/products?page=${page}`, data, 60000) // Cache for 1 minute (60000 ms)
+            const products = await Product.findAll({ where: { categoryId } })
+            cache.put(`/api/products/category/${categoryId}`, products, 60000)
 
-            res.status(200).json(data)
-
+            res.status(200).json(products)
         } catch (error) {
             console.log(error);
-            res.status(500).send(error);
+            res.status(500).send(error)
         }
     })
 

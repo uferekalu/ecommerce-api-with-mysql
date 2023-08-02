@@ -1,11 +1,16 @@
 const { Sequelize, DataTypes } = require('sequelize')
 const bcrypt = require('bcrypt')
-// require('dotenv').config()
+require('dotenv').config()
 
 const sequelize = new Sequelize(process.env.DB, process.env.USERNAME, process.env.PASSWORD, {
     host: process.env.HOST,
     dialect: 'mysql'
 })
+
+// const sequelize = new Sequelize("online_shop", "root", "INTELLIGENTgoodnews1234@@", {
+//     host: "localhost",
+//     dialect: 'mysql'
+// })
 
 // Define User model
 const User = sequelize.define('User', {

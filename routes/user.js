@@ -4,6 +4,7 @@ const { User } = require('../models')
 const bcrypt = require('bcrypt')
 const Joi = require('joi')
 const generateAuthToken = require('../utils/generateAuthToken')
+const { isUser } = require('../middleware/auth')
 
 // Create a new user
 router.post('/register', async (req, res) => {
@@ -84,7 +85,7 @@ router.post('/login', async (req, res) => {
     }
 })
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', isUser, async (req, res) => {
     try {
         const user = await User.findByPk(req.params.id)
         if (!user) {

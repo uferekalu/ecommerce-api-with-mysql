@@ -7,11 +7,6 @@ const sequelize = new Sequelize(process.env.DB, process.env.USERNAME, process.en
     dialect: 'mysql'
 })
 
-// const sequelize = new Sequelize("online_shop", "root", "INTELLIGENTgoodnews1234@@", {
-//     host: "localhost",
-//     dialect: 'mysql'
-// })
-
 // Define User model
 const User = sequelize.define('User', {
     name: {
